@@ -17,5 +17,7 @@ contest
 input
 main
 main.go
+main.cpp
 .vscode
 test
+include
