@@ -17,7 +17,7 @@ echo -n QUESTION?
 read q
 mkdir -p _result/_$dir/${q// /_}
 mv -i $sendfile _result/_$dir/${q// /_}
-git add -f _result/_$dir/$q/$sendfile
+git add -f _result/_$dir/${q// /_}/$sendfile
 git commit -m "$dir $q"
 cp -i _template/$sendfile ./$sendfile
 
