@@ -24,6 +24,11 @@ func main() {
 	o := 0
 	n := ni()
 	ns := nis(n)
+
+	for i := 0; i < n; i++ {
+
+	}
+
 	out(o)
 }
 
@@ -342,7 +347,7 @@ func permutation(n int, k int) int {
 }
 
 /*
-	for {
+for {
 
 		// Do something
 
@@ -785,9 +790,9 @@ func i2s(l, m int, def int) [][]int {
 	return sl
 }
 
-//	out(stois("abcde", 'a'))
-//	out(stois("abcde", 'a'-1))
-//	out(stois("12345", '0'))
+// out(stois("abcde", 'a'))
+// out(stois("abcde", 'a'-1))
+// out(stois("12345", '0'))
 func stois(s string, baseRune rune) []int {
 	r := make([]int, len(s))
 	for i, v := range s {
@@ -938,8 +943,9 @@ func pointfDist(a, b pointf) float64 {
 // ==================================================
 
 /*
-	ih := newIntHeap(asc)
-	ih.Push(v)
+ih := newIntHeap(asc)
+ih.Push(v)
+
 	for !ih.IsEmpty() {
 		v := ih.Pop(h)
 	}
@@ -1000,10 +1006,11 @@ func (ih *IntHeap) GetSum() int {
 }
 
 /*
-	h := &OrgIntHeap{}
-	heap.Init(h)
+h := &OrgIntHeap{}
+heap.Init(h)
 
-	heap.Push(h, v)
+heap.Push(h, v)
+
 	for !h.IsEmpty() {
 		v = heap.Pop(h).(int)
 	}
@@ -1709,8 +1716,9 @@ type tree struct {
 }
 
 /*
-	n := ni()
-	edges := make([][]edge, n)
+n := ni()
+edges := make([][]edge, n)
+
 	for i := 0; i < n-1; i++ {
 		s, t := ni2()
 		s--
@@ -1718,8 +1726,9 @@ type tree struct {
 		edges[s] = append(edges[s], edge{to: t})
 		edges[t] = append(edges[t], edge{to: s})
 	}
-	tree := newtree(n, 0, edges)
-	tree.init()
+
+tree := newtree(n, 0, edges)
+tree.init()
 */
 func newtree(size int, root int, edges [][]edge) *tree {
 	parentsize := int(math.Log2(float64(size))) + 1
@@ -1847,9 +1856,10 @@ func newgraph(size int, edges [][]edge) *graph {
 }
 
 /*
-	v, e := ni2()
-	edges := make([][]edge, v)
-	deg := make([]int, v)
+v, e := ni2()
+edges := make([][]edge, v)
+deg := make([]int, v)
+
 	for i := 0; i < e; i++ {
 		s, t, c := ni3()
 		s--
@@ -1857,8 +1867,9 @@ func newgraph(size int, edges [][]edge) *graph {
 		edges[s] = append(edges[s], edge{to: t, cost: c})
 		deg[t]++
 	}
-	graph := newgraph(v, edges)
-	isdag, r := graph.topologicalSort(deg)
+
+graph := newgraph(v, edges)
+isdag, r := graph.topologicalSort(deg)
 */
 func (g *graph) topologicalSort(deg []int) (bool, []int) {
 
@@ -1891,9 +1902,9 @@ func (g *graph) topologicalSort(deg []int) (bool, []int) {
 }
 
 /*
-	v, e := ni2()
-	edges := make([][]edge, v)
-	edgers := make([][]edge, v)
+v, e := ni2()
+edges := make([][]edge, v)
+edgers := make([][]edge, v)
 
 	for i := 0; i < e; i++ {
 		s, t := ni2()
@@ -1903,7 +1914,7 @@ func (g *graph) topologicalSort(deg []int) (bool, []int) {
 		edgers[t] = append(edgers[t], edge{to: s})
 	}
 
-	scc := getScc(v, edges, edgers)
+scc := getScc(v, edges, edgers)
 */
 func getScc(v int, edges, edgers [][]edge) [][]int {
 	used := make([]bool, v)
@@ -2032,18 +2043,18 @@ func (g *graph) floydWarshall() ([][]int, bool) {
 }
 
 /*
-	v, e := ni2()
-	edges := make([][]edge, 1)
-	edges[0] = make([]edge, e)
+v, e := ni2()
+edges := make([][]edge, 1)
+edges[0] = make([]edge, e)
 
 	for i := 0; i < e; i++ {
 		s, t, d := ni3()
 		edges[0][i] = edge{from: s, to: t, cost: d}
 	}
 
-	graph := newgraph(v, edges)
+graph := newgraph(v, edges)
 
-	o = graph.kruskal()
+o = graph.kruskal()
 */
 func (g *graph) kruskal() int {
 
@@ -2066,16 +2077,18 @@ func (g *graph) kruskal() int {
 }
 
 /*
-	v, e := ni2()
-	edges := make([][]edge, v)
+v, e := ni2()
+edges := make([][]edge, v)
+
 	for i := 0; i < e; i++ {
 		s, t, c := ni3()
 		s--
 		t--
 		setDualEdge(edges, s, t, c)
 	}
-	graph := newgraph(v, edges)
-	o = graph.dinic()
+
+graph := newgraph(v, edges)
+o = graph.dinic()
 */
 func (g *graph) dinic() int {
 	f := 0
