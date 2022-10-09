@@ -22,3 +22,6 @@ main.cpp
 test
 include
 local_examples
+
+go.mod
+go.sum
