@@ -15,6 +15,9 @@ runwi:
 base:
 	./shell/base.sh
 
+bs:
+	./shell/bases.sh
+
 m:
 	./shell/movefile.sh
 
