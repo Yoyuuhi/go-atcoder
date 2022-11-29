@@ -22,23 +22,19 @@ func main() {
 	defer flush()
 
 	n, q := ni2()
-
 	s := ns()
 
 	offset := 0
 	for i := 0; i < q; i++ {
-		t, x := ni2()
-		switch t {
+		que, x := ni2()
+
+		switch que {
 		case 1:
-			offset -= x
-			for n-1+offset < 0 {
-				offset += n
-			}
+			offset += x
+			offset %= n
 		case 2:
-			for x-1+offset < 0 {
-				offset += n
-			}
-			out(string(s[x-1+offset]))
+			x--
+			out(string(s[(x-offset+n)%n]))
 		}
 	}
 }
@@ -2373,3 +2369,32 @@ func butterflyInv(a []int, M int) {
 		}
 	}
 }
+
+// redBlackTree
+// n := ni()
+// as := nis(n)
+
+// tree := rbt.NewWithIntComparator()
+// tree.Put(as[0], 1)
+// for i := 1; i < n; i++ {
+// 	left, el := tree.Floor(as[i])
+// 	right, er := tree.Ceiling(as[i])
+
+// 	if !el {
+// 		tree.Remove(right.Key)
+// 		tree.Put(as[i], 1)
+// 		continue
+// 	}
+// 	if !er {
+// 		tree.Put(as[i], tree.Size()+1)
+// 		continue
+// 	}
+
+// 	if left.Key.(int) == as[i] || right.Key.(int) == as[i] {
+// 		continue
+// 	}
+
+// 	val := right.Value.(int)
+// 	tree.Remove(right.Key)
+// 	tree.Put(as[i], val)
+// }
