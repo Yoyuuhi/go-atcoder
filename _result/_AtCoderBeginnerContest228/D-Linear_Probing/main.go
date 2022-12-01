@@ -1,4 +1,3 @@
-// https://atcoder.jp/contests/abc228/tasks/abc228_d
 package main
 
 import (
@@ -22,43 +21,42 @@ func main() {
 
 	defer flush()
 
-	n := 1048576
 	q := ni()
-	mem := map[int]int{}
-	toMem := map[int]int{}
+	n := 1 << 20
+	uf := newUnionFind(n)
 
+	mem := make([]int, n)
+	for i := 0; i < n; i++ {
+		mem[i] = -1
+	}
 	for i := 0; i < q; i++ {
 		t, x := ni2()
 		switch t {
-		case 2:
-			v, e := mem[x%n]
-			if e {
-				out(v)
-			} else {
-				out(-1)
-			}
 		case 1:
-			ind := x % n
-			if _, e := mem[ind]; e {
-				ind = simulate(ind, toMem)
+			r := uf.root(x % n)
+			if mem[r] == -1 {
+				mem[r] = x
+				from := (r - 1 + n) % n
+				if mem[from] != -1 {
+					uf.unite(r, from)
+				}
+				to := (r + 1) % n
+				if mem[to] != -1 {
+					uf.unite(to, r)
+				}
+			} else {
+				r1 := (r + 1) % n
+				mem[r1] = x
+				uf.unite(r1, r)
+				to := (r1 + 1) % n
+				if mem[to] != -1 {
+					uf.unite(to, r1)
+				}
 			}
-			mem[ind] = x
-			if _, e := toMem[x%n]; !e {
-				toMem[x%n] = ind + 1
-			}
+		case 2:
+			out(mem[x%n])
 		}
 	}
-}
-
-func simulate(ind int, toMem map[int]int) int {
-	var ans int
-	if v, e := toMem[ind]; e {
-		ans = simulate(v, toMem)
-	} else {
-		ans = ind
-	}
-	toMem[ind] = ans + 1
-	return ans
 }
 
 // ==================================================
@@ -1275,9 +1273,7 @@ func (u *unionFind) unite(x, y int) {
 	if x == y {
 		return
 	}
-	if u.size(x) < u.size(y) {
-		x, y = y, x
-	}
+	// > y, x
 	u.par[x] += u.par[y]
 	u.par[y] = x
 }
@@ -2391,3 +2387,32 @@ func butterflyInv(a []int, M int) {
 		}
 	}
 }
+
+// redBlackTree
+// n := ni()
+// as := nis(n)
+
+// tree := rbt.NewWithIntComparator()
+// tree.Put(as[0], 1)
+// for i := 1; i < n; i++ {
+// 	left, el := tree.Floor(as[i])
+// 	right, er := tree.Ceiling(as[i])
+
+// 	if !el {
+// 		tree.Remove(right.Key)
+// 		tree.Put(as[i], 1)
+// 		continue
+// 	}
+// 	if !er {
+// 		tree.Put(as[i], tree.Size()+1)
+// 		continue
+// 	}
+
+// 	if left.Key.(int) == as[i] || right.Key.(int) == as[i] {
+// 		continue
+// 	}
+
+// 	val := right.Value.(int)
+// 	tree.Remove(right.Key)
+// 	tree.Put(as[i], val)
+// }
