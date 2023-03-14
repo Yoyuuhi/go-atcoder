@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"container/heap"
 	"container/list"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -24,92 +25,48 @@ func main() {
 	n := ni()
 	s := ns()
 
-	left := -1
+	l := n
 	for i := 0; i < n; i++ {
 		if string(s[i]) == "p" {
-			left = i
-			break
+			l = min(l, i)
 		}
 	}
-	if left == -1 {
+	if l == n {
 		out(s)
 		return
 	}
 
-	rights := []int{}
-	for i := left + 1; i < n; i++ {
-		if string(s[i]) == "p" {
-			rights = append(rights, i)
+	as := make([]string, 0, n)
+	for r := l; r < n; r++ {
+		if string(s[r]) == "p" {
+			as = append(as, calc(s, l, r))
 		}
 	}
-	if len(rights) == 0 {
-		if left < n-1 {
-			out(s[:left] + "d" + s[left+1:])
-		} else {
-			out(s[:left] + "d")
-		}
-		return
-	}
-
-	out(rights)
-
-	count := 1
-	right := rights[0]
-	for _, v := range rights {
-		index := v
-		tempCount := 1
-		for index > left+1 && string(s[index-1]) == "p" {
-			index -= 1
-			tempCount += 1
-		}
-		if tempCount > count {
-			count = tempCount
-			right = v
-		}
-		out(tempCount, right)
-	}
-
-	out(s[:left] + convert(s[left:right+1]) + s[right+1:])
+	sort.Slice(as, func(i, j int) bool {
+		return as[i] < as[j]
+	})
+	out(as[0])
 }
 
-func convert(str string) string {
-	ans := ""
-
-	for i := len(str) - 1; i >= 0; i-- {
-		temp := ""
-		if string(str[i]) == "p" {
-			temp = "d"
+func calc(s string, l, r int) string {
+	ans := make([]string, len(s))
+	for i := 0; i < l; i++ {
+		ans[i] = string(s[i])
+	}
+	idx := l
+	for i := r; i >= l; i-- {
+		c := string(s[i])
+		if c == "d" {
+			ans[idx] = "p"
 		} else {
-			temp = "p"
+			ans[idx] += "d"
 		}
-		ans += temp
+		idx++
 	}
-	return ans
-}
-
-// 素因数分解
-func prime_factorize(n int) map[int]int {
-	res := make(map[int]int, 1000)
-
-	for p := 2; p*p <= n; p++ {
-		if n%p != 0 {
-			continue
-		}
-
-		e := 0
-		for n%p == 0 {
-			e++
-			n /= p
-		}
-
-		res[p] += e
+	for i := r + 1; i < len(s); i++ {
+		ans[i] = string(s[i])
 	}
-
-	if n != 1 {
-		res[n] += 1
-	}
-
-	return res
+	return strings.Join(ans, "")
 }
 
 // ==================================================
@@ -1488,6 +1445,7 @@ func (s *stree) set(i, x int) {
 	}
 }
 
+// a < i + 1 <= b
 func (s *stree) query(a, b int) int {
 	return s.querysub(a, b, 0, 0, s.n)
 }
@@ -1556,332 +1514,6 @@ func (s *stree) debug() {
 		}
 	}
 	out(strings.Join(l, " "))
-}
-
-/*
-s := newlazystree(n,stmin|stmax,stset|stadd|stmadd)
-s.set(i,x)
-s.add(i,x)
-s.rc(l,r,x)
-result1 := s.query(l,r)
-result2 := s.findrightest(l,r,x)
-result3 := s.findlefttest(l,r,x)
-*/
-type lazystree struct {
-	on   int
-	n    int
-	b    []int
-	lazy []int
-	def  int
-	cmp  func(i, j int) int
-	culc func(i, j int) int
-}
-
-func newlazystree(n int, minmax streeminmmax, ctype streeculctype) lazystree {
-	tn := 1
-	for tn < n {
-		tn *= 2
-	}
-	s := lazystree{
-		on:   n,
-		n:    tn,
-		b:    make([]int, 2*tn-1),
-		lazy: make([]int, 2*tn-1),
-	}
-	switch minmax {
-	case stmin:
-		s.def = inf
-		for i := 0; i < 2*tn-1; i++ {
-			s.b[i] = s.def
-			s.lazy[i] = s.def
-		}
-		s.cmp = func(i, j int) int {
-			return min(i, j)
-		}
-	case stmax:
-		s.cmp = func(i, j int) int {
-			return max(i, j)
-		}
-	}
-	switch ctype {
-	case stadd:
-		s.culc = func(i, j int) int {
-			if i == s.def {
-				return j
-			}
-			if j == s.def {
-				return i
-			}
-			return i + j
-		}
-	case stmadd:
-		s.culc = func(i, j int) int {
-			if i == s.def {
-				return j
-			}
-			if j == s.def {
-				return i
-			}
-			return madd(i, j)
-		}
-	case stset:
-		s.culc = func(i, j int) int {
-			return j
-		}
-	}
-	return s
-}
-
-func (s lazystree) eval(k int) {
-	if s.lazy[k] == s.def {
-		return
-	}
-	if k < s.n-1 {
-		s.lazy[k*2+1] = s.culc(s.lazy[k*2+1], s.lazy[k])
-		s.lazy[k*2+2] = s.culc(s.lazy[k*2+2], s.lazy[k])
-	}
-	s.b[k] = s.culc(s.b[k], s.lazy[k])
-	s.lazy[k] = s.def
-}
-
-func (s lazystree) add(i, x int) {
-	i += s.n - 1
-	s.b[i] += x
-
-	for i > 0 {
-		i = (i - 1) / 2
-		s.b[i] = s.cmp(s.b[i*2+1], s.b[i*2+2])
-	}
-}
-
-func (s lazystree) set(i, x int) {
-	i += s.n - 1
-	s.b[i] = x
-
-	for i > 0 {
-		i = (i - 1) / 2
-		s.b[i] = s.cmp(s.b[i*2+1], s.b[i*2+2])
-	}
-}
-
-// range culc a <= n n <= b
-func (s lazystree) rc(a, b, x int) {
-	s.rcsub(a, b, x, 0, 0, s.n)
-}
-
-func (s lazystree) rcsub(a, b, x, k, l, r int) {
-	s.eval(k)
-	if a <= l && r <= b {
-		s.lazy[k] = s.culc(s.lazy[k], x)
-		s.eval(k)
-	} else if l < b && a < r {
-		s.rcsub(a, b, x, k*2+1, l, (l+r)/2)
-		s.rcsub(a, b, x, k*2+2, (l+r)/2, r)
-		s.b[k] = s.cmp(s.b[k*2+1], s.b[k*2+2])
-	}
-}
-
-func (s lazystree) get(a int) int {
-	return s.query(a, a+1)
-}
-
-func (s lazystree) query(a, b int) int {
-	return s.querysub(a, b, 0, 0, s.n)
-}
-
-func (s lazystree) querysub(a, b, k, l, r int) int {
-	s.eval(k)
-	if r <= a || b <= l {
-		return s.def
-	}
-	if a <= l && r <= b {
-		return s.b[k]
-	}
-	return s.cmp(
-		s.querysub(a, b, k*2+1, l, (l+r)/2),
-		s.querysub(a, b, k*2+2, (l+r)/2, r),
-	)
-}
-
-func (s lazystree) findrightest(a, b, x int) int {
-	return s.findrightestsub(a, b, x, 0, 0, s.n)
-}
-
-func (s lazystree) findrightestsub(a, b, x, k, l, r int) int {
-	if s.b[k] > x || r <= a || b <= l {
-		return a - 1
-	} else if k >= s.n-1 {
-		return k - s.n + 1
-	}
-	vr := s.findrightestsub(a, b, x, 2*k+2, (l+r)/2, r)
-	if vr != a-1 {
-		return vr
-	}
-	return s.findrightestsub(a, b, x, 2*k+1, l, (l+r)/2)
-}
-
-func (s lazystree) findleftest(a, b, x int) int {
-	return s.findleftestsub(a, b, x, 0, 0, s.n)
-}
-
-func (s lazystree) findleftestsub(a, b, x, k, l, r int) int {
-	if s.b[k] > x || r <= a || b <= l {
-		return b
-	} else if k >= s.n-1 {
-		return k - s.n + 1
-	}
-	vl := s.findleftestsub(a, b, x, 2*k+1, l, (l+r)/2)
-	if vl != b {
-		return vl
-	}
-	return s.findleftestsub(a, b, x, 2*k+2, (l+r)/2, r)
-}
-
-func (s lazystree) debug() {
-	l := []string{}
-	t := 2
-	out("data")
-	for i := 0; i < 2*s.n-1; i++ {
-		if i+1 == t {
-			t *= 2
-			out(strings.Join(l, " "))
-			l = []string{}
-		}
-		if s.b[i] == inf {
-			l = append(l, "∞")
-		} else {
-			l = append(l, strconv.Itoa(s.b[i]))
-		}
-	}
-	out(strings.Join(l, " "))
-	out("lazy")
-	l = []string{}
-	t = 2
-	for i := 0; i < 2*s.n-1; i++ {
-		if i+1 == t {
-			t *= 2
-			out(strings.Join(l, " "))
-			l = []string{}
-		}
-		if s.lazy[i] == inf {
-			l = append(l, "∞")
-		} else {
-			l = append(l, strconv.Itoa(s.lazy[i]))
-		}
-	}
-	out(strings.Join(l, " "))
-}
-
-func (s lazystree) debug2() {
-	l := make([]string, s.n)
-	for i := 0; i < s.on; i++ {
-		l[i] = strconv.Itoa(s.get(i))
-	}
-	out(strings.Join(l, " "))
-}
-
-// ==================================================
-// tree
-// ==================================================
-
-type tree struct {
-	size       int
-	root       int
-	edges      [][]edge
-	parentsize int
-	parent     [][]int
-	depth      []int
-	orderidx   int
-	order      []int
-}
-
-/*
-n := ni()
-edges := make([][]edge, n)
-
-	for i := 0; i < n-1; i++ {
-		s, t := ni2()
-		s--
-		t--
-		edges[s] = append(edges[s], edge{to: t})
-		edges[t] = append(edges[t], edge{to: s})
-	}
-
-tree := newtree(n, 0, edges)
-tree.init()
-*/
-func newtree(size int, root int, edges [][]edge) *tree {
-	parentsize := int(math.Log2(float64(size))) + 1
-	parent := make([][]int, parentsize)
-	for i := 0; i < parentsize; i++ {
-		parent[i] = make([]int, size)
-	}
-	depth := make([]int, size)
-	order := make([]int, size)
-	return &tree{
-		size:       size,
-		root:       root,
-		edges:      edges,
-		parentsize: parentsize,
-		parent:     parent,
-		depth:      depth,
-		order:      order,
-	}
-}
-
-func (t *tree) init() {
-	t.dfs(t.root, -1, 0)
-	for i := 0; i+1 < t.parentsize; i++ {
-		for j := 0; j < t.size; j++ {
-			if t.parent[i][j] < 0 {
-				t.parent[i+1][j] = -1
-			} else {
-				t.parent[i+1][j] = t.parent[i][t.parent[i][j]]
-			}
-		}
-	}
-}
-
-func (t *tree) dfs(v, p, d int) {
-	t.order[v] = t.orderidx
-	t.orderidx++
-	t.parent[0][v] = p
-	t.depth[v] = d
-	for _, nv := range t.edges[v] {
-		if nv.to != p {
-			t.dfs(nv.to, v, d+1)
-		}
-	}
-}
-
-func (t *tree) lca(u, v int) int {
-	if t.depth[u] > t.depth[v] {
-		u, v = v, u
-	}
-	for i := 0; i < t.parentsize; i++ {
-		if (t.depth[v]-t.depth[u])>>i&1 == 1 {
-			v = t.parent[i][v]
-		}
-	}
-	if u == v {
-		return u
-	}
-	for i := t.parentsize - 1; i >= 0; i-- {
-		if t.parent[i][u] != t.parent[i][v] {
-			u = t.parent[i][u]
-			v = t.parent[i][v]
-		}
-	}
-	return t.parent[0][u]
-}
-
-func (t *tree) dist(u, v int) int {
-	return t.depth[u] + t.depth[v] - t.depth[t.lca(u, v)]*2
-}
-
-func (t *tree) auxiliarytree(sl []int) []int {
-	sort.Slice(sl, func(i, j int) bool { return t.order[sl[i]] < t.order[sl[j]] })
-	return sl
 }
 
 // ==================================================
@@ -2230,215 +1862,296 @@ func (g *graph) dinicdfs(v, t, f int) int {
 	return 0
 }
 
+func getPrimes(n int) []int {
+	notPrime := make([]bool, n+1)
+	prime := make([]int, n+1)
+	idx := 0
+	for i := 2; i <= n; i++ {
+		if notPrime[i] {
+			continue
+		}
+		prime[idx] = i
+		idx++
+		t := n / i
+		for j := 2; j <= t; j++ {
+			notPrime[j*i] = true
+		}
+	}
+	return prime[:idx]
+}
+
+func prime_factorize(n int) map[int]int {
+	res := make(map[int]int, 1000)
+
+	for p := 2; p*p <= n; p++ {
+		if n%p != 0 {
+			continue
+		}
+
+		e := 0
+		for n%p == 0 {
+			e++
+			n /= p
+		}
+
+		res[p] += e
+	}
+
+	if n != 1 {
+		res[n] += 1
+	}
+
+	return res
+}
+
+func factorize(n int) []int {
+	ans := make([]int, 0)
+
+	for p := 1; p*p <= n; p++ {
+		if n%p != 0 {
+			continue
+		}
+
+		ans = append(ans, p)
+		restP := n / p
+		if restP != p {
+			ans = append(ans, restP)
+		}
+	}
+
+	return ans
+}
+
 // ==================================================
-// fft
+// vector
 // ==================================================
-
-func convolution(a, b []int) []int {
-	n1, n2 := len(a), len(b)
-	n := n1 + n2 - 1
-	if n1 == 0 || n2 == 0 {
-		return []int{}
-	}
-
-	MOD1 := 754974721
-	MOD2 := 167772161
-	MOD3 := 469762049
-	M2M3 := MOD2 * MOD3
-	M1M3 := MOD1 * MOD3
-	M1M2 := MOD1 * MOD2
-	M1M2M3 := MOD1 * MOD2 * MOD3
-
-	i1 := minv(M2M3, MOD1)
-	i2 := minv(M1M3, MOD2)
-	i3 := minv(M1M2, MOD3)
-
-	c1 := convolutionMod(a, b, MOD1)
-	c2 := convolutionMod(a, b, MOD2)
-	c3 := convolutionMod(a, b, MOD3)
-
-	c := make([]int, n)
-	offset := []int{0, 0, M1M2M3, 2 * M1M2M3, 3 * M1M2M3}
-
-	for i := 0; i < n; i++ {
-		x := 0
-		x += c1[i] * i1 % MOD1 * M2M3
-		x += c2[i] * i2 % MOD2 * M1M3
-		x += c3[i] * i3 % MOD3 * M1M2
-		diff := c1[i] - x%MOD1
-		if diff < 0 {
-			diff += MOD1
-		}
-		x -= offset[diff%5]
-		c[i] = x
-	}
-
-	return c
+type node struct {
+	value interface{}
+	next  *node
+	prev  *node
 }
 
-func convolutionMod(a, b []int, mod int) []int {
-	n1, n2 := len(a), len(b)
-	n := n1 + n2 - 1
-	if n1 == 0 || n2 == 0 {
-		return []int{}
-	}
-
-	z := 1 << ceilPow2(n)
-	aa, bb := make([]int, z), make([]int, z)
-	copy(aa, a)
-	copy(bb, b)
-	a, b = aa, bb
-
-	butterfly(a, mod)
-	butterfly(b, mod)
-	for i := 0; i < z; i++ {
-		a[i] = a[i] * b[i] % mod
-	}
-	butterflyInv(a, mod)
-	a = a[:n]
-	iz := minv(z, mod)
-	for i := 0; i < n; i++ {
-		a[i] = a[i] * iz % mod
-		if a[i] < 0 {
-			a[i] += mod
-		}
-	}
-
-	return a
+type Vector struct {
+	size     int   // element number in vector
+	capacity int   // vector capacity
+	header   *node // first element in vector
+	tail     *node // last element in vector
+	end      *node // end of the vector
 }
 
-func primitiveRoot(m int) int {
-	if m == 2 {
-		return 1
+/*
+construct the vector
+make the capacity as double the size which we need
+*/
+func (this *Vector) constructVector(size int, value interface{}) {
+	firstNode := node{
+		value: value,
 	}
-	if m == 167772161 || m == 469762049 || m == 998244353 {
-		return 3
-	}
-	if m == 754974721 {
-		return 11
-	}
-	divs := make([]int, 20)
-	divs[0] = 2
-	cnt := 1
-	x := (m - 1) / 2
-	for x%2 == 0 {
-		x /= 2
-	}
-	for i := 3; i*i <= x; i += 2 {
-		if x%i == 0 {
-			divs[cnt] = i
-			cnt++
-			for x%i == 0 {
-				x /= i
-			}
+	currNode := &firstNode
+	capacity := size * 2
+
+	for i := 1; i < capacity; i++ {
+		node := node{value: value}
+		if value != nil && i == size-1 {
+			this.tail = &node
 		}
+		currNode.next = &node
+		node.prev = currNode
+		currNode = &node
 	}
-	if x > 1 {
-		divs[cnt] = x
-		cnt++
+	this.header = &firstNode
+
+	if value == nil {
+		this.tail = this.header
+		this.size = 0
+	} else {
+		this.size = size
 	}
-	for g := 2; ; g++ {
-		ok := true
-		for i := 0; i < cnt; i++ {
-			if mpow(g, (m-1)/divs[i], m) == 1 {
-				ok = false
-				break
-			}
-		}
-		if ok {
-			return g
-		}
+	this.end = currNode
+
+	this.capacity = capacity
+}
+
+func (this *Vector) extendSpace() {
+	extendSize := this.capacity
+	this.capacity = this.capacity * 2
+
+	for i := 0; i < extendSize; i++ {
+		node := node{}
+		this.end.next = &node
+		node.prev = this.end
+		this.end = this.end.next
 	}
 }
 
-func ceilPow2(n int) int {
-	x := 0
-	for 1<<x < n {
-		x++
+func NewVector(parameter ...int) Vector {
+	v := Vector{}
+
+	parSize := len(parameter)
+
+	switch parSize {
+	case 0:
+		v.constructVector(10, nil)
+	case 1:
+		v.constructVector(parameter[0], nil)
+	case 2:
+		v.constructVector(parameter[0], parameter[1])
 	}
-	return x
+	return v
 }
 
-func bsf(n int) int {
-	x := 0
-	for n&(1<<x) == 0 {
-		x++
+func (this *Vector) PushBack(value interface{}) {
+	if this.tail == this.end {
+		this.extendSpace()
 	}
-	return x
+	this.tail.value = value
+	if this.tail != this.end {
+		this.tail = this.tail.next
+	}
+	this.size++
 }
 
-func butterfly(a []int, M int) {
-	g := primitiveRoot(M)
-	n := len(a)
-	h := ceilPow2(n)
+func (this *Vector) PushFront(value interface{}) {
+	NewNode := node{}
+	NewNode.value = value
+	this.capacity++
+	this.size++
+	this.header.prev = &NewNode
+	NewNode.next = this.header
+	this.header = &NewNode
+}
 
-	se := make([]int, 30)
-	es, ies := make([]int, 30), make([]int, 30)
-	cnt2 := bsf(M - 1)
-	e := mpow(g, (M-1)>>cnt2, M)
-	ie := minv(e, M)
-	for i := cnt2; i >= 2; i-- {
-		es[i-2] = e
-		ies[i-2] = ie
-		e = e * e % M
-		ie = ie * ie % M
+func (this *Vector) PopBack() {
+	this.tail.value = nil
+	this.tail = this.tail.prev
+	this.size--
+}
+
+func (this *Vector) PopFront() {
+	this.header = this.header.next
+	this.size--
+	this.capacity--
+}
+
+func (this *Vector) Insert(value interface{}, position int) error {
+	if position > this.size {
+		return errors.New("You position is out of size")
 	}
-	now := 1
-	for i := 0; i <= cnt2-2; i++ {
-		se[i] = es[i] * now % M
-		now = now * ies[i] % M
+	if this.size+1 > this.capacity {
+		this.extendSpace()
 	}
-	for ph := 1; ph <= h; ph++ {
-		w := 1 << (ph - 1)
-		p := 1 << (h - ph)
-		now := 1
-		for s := 0; s < w; s++ {
-			offset := s << (h - ph + 1)
-			for i := 0; i < p; i++ {
-				l := a[i+offset]
-				r := a[i+offset+p] * now % M
-				a[i+offset] = (l + r) % M
-				a[i+offset+p] = (M + l - r) % M
-			}
-			now = now * se[bsf(^s)] % M
+
+	newNode := node{value: value}
+
+	iter := this.header
+	pathCount := 0
+
+	for pathCount != position {
+		iter = iter.next
+		pathCount++
+	}
+
+	if iter.prev != nil {
+		iter.prev.next = &newNode
+		newNode.prev = iter.prev
+	}
+
+	if iter != nil {
+		iter.prev = &newNode
+		newNode.next = iter
+	}
+
+	if position == 0 {
+		this.header = &newNode
+	}
+
+	this.size++
+	this.capacity++
+
+	return nil
+}
+
+func (this *Vector) Erase(position int) {
+	if position > this.size {
+		fmt.Print("You position is out of size")
+		return
+	}
+
+	iter := this.header
+	pathCount := 0
+
+	for pathCount != position {
+		iter = iter.next
+		pathCount++
+	}
+
+	if iter.prev != nil {
+		iter.prev.next = iter.next
+		if iter.next != nil {
+			iter.next.prev = iter.prev
 		}
 	}
+
+	if position == 0 {
+		this.header = iter.next
+	}
+
+	this.size--
+	this.capacity--
+
+	iter = nil
 }
 
-func butterflyInv(a []int, M int) {
-	g := primitiveRoot(M)
-	n := len(a)
-	h := ceilPow2(n)
+func (this *Vector) Swap(v *Vector) bool {
+	return false
+}
 
-	sie := make([]int, 30)
-	es, ies := make([]int, 30), make([]int, 30)
-	cnt2 := bsf(M - 1)
-	e := mpow(g, (M-1)>>cnt2, M)
-	ie := minv(e, M)
-	for i := cnt2; i >= 2; i-- {
-		es[i-2] = e
-		ies[i-2] = ie
-		e = e * e % M
-		ie = ie * ie % M
-	}
-	now := 1
-	for i := 0; i <= cnt2-2; i++ {
-		sie[i] = ies[i] * now % M
-		now = now * es[i] % M
-	}
-	for ph := h; ph >= 1; ph-- {
-		w := 1 << (ph - 1)
-		p := 1 << (h - ph)
-		inow := 1
-		for s := 0; s < w; s++ {
-			offset := s << (h - ph + 1)
-			for i := 0; i < p; i++ {
-				l := a[i+offset]
-				r := a[i+offset+p]
-				a[i+offset] = (l + r) % M
-				a[i+offset+p] = (M + l - r) * inow % M
-			}
-			inow = inow * sie[bsf(^s)] % M
+func (this *Vector) Clear() {
+	iter := this.header
+	index := 0
+
+	for iter != nil {
+		tempNext := iter.next
+		iter.value = nil
+		if index >= 10 {
+			iter = nil
+			this.capacity--
 		}
+		iter = tempNext
+		index++
 	}
+	this.size = 0
+}
+
+func (this *Vector) At(position int) *interface{} {
+	iter := this.header
+	index := 0
+	for index != position {
+		iter = iter.next
+		index++
+	}
+	return &iter.value
+}
+
+func (this *Vector) Front() interface{} {
+	return this.header.value
+}
+
+func (this *Vector) Back() interface{} {
+	return this.tail.prev.value
+}
+
+func (this *Vector) Size() int {
+	return this.size
+}
+
+func (this *Vector) Capacity() int {
+	return this.capacity
+}
+
+func (this *Vector) Empty() bool {
+	if this.size == 0 {
+		return true
+	}
+	return false
 }
