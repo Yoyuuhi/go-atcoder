@@ -12,12 +12,20 @@ if test "$mode" = "cpp"; then
 fi
 
 dir=$(cat ./contest)
-echo -e CONTEST: $dir
+echo -e CONTEST: ${dir// /}
 echo -n QUESTION?
 read q
-mkdir -p _result/_$dir/${q// /_}
-mv -i $sendfile _result/_$dir/${q// /_}
-git add -f _result/_$dir/${q// /_}/$sendfile
-git commit -m "$dir $q"
+if test "$mode" = "go" ; then
+  mkdir -p _result/_${dir// /}/${q// /_}
+  mv -i $sendfile _result/_${dir// /}/${q// /_}
+  git add -f _result/_${dir// /}/${q// /_}/$sendfile
+fi
+if test "$mode" = "cpp" ; then
+  mkdir -p _cpp_result/_${dir// /}/${q// /_}
+  mv -i $sendfile _cpp_result/_${dir// /}/${q// /_}
+  git add -f _cpp_result/_${dir// /}/${q// /_}/$sendfile
+fi
+
+git commit -m "${dir// /} $q"
 cp -i _template/$sendfile ./$sendfile
 
